@@ -12,18 +12,16 @@ export default function TodoViewPage({
     params,
 }: PageProps<'/todo/[id]/view'>): React.JSX.Element {
     return (
-        <div className="space-y-4">
+        <div className="mx-auto max-w-2xl space-y-4">
             <Link href="/">
-                <Button variant="outline" size="sm">
-                    ← 목록으로
-                </Button>
+                <Button className="btn-soft">← 마을로 돌아가기</Button>
             </Link>
 
             <Suspense
                 fallback={
                     <div
                         role="status"
-                        className="h-48 animate-pulse rounded-2xl bg-muted"
+                        className="h-48 animate-pulse rounded-3xl bg-[#F5ECDC]"
                     />
                 }
             >

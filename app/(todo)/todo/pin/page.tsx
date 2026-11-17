@@ -72,13 +72,13 @@ export default function TodoPinPage() {
 
     // ✅ 성공: 목록 렌더링 (key는 할 일의 고유 id)
     return (
-        <div className="space-y-3">
-            <h1 className="text-xl font-bold">찜 목록 ({todos.length})</h1>
+        <div className="paper-panel mx-auto max-w-2xl space-y-4 p-5 sm:p-8">
+            <h1 className="font-cute text-2xl text-[#65564B]">💖 찜한 편지 ({todos.length})</h1>
             <ul className="space-y-2">
                 {todos.map((todo) => (
                     <li
                         key={todo.id}
-                        className="flex items-center justify-between gap-2 rounded-2xl border p-4"
+                        className="flex items-center justify-between gap-2 rounded-2xl bg-[#FFFAF0] p-4 shadow-[0_3px_8px_rgb(101_86_75/0.08)]"
                     >
                         <Link
                             href={`/todo/${todo.id}/view`}

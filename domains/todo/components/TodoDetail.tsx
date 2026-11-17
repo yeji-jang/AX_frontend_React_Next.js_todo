@@ -7,6 +7,7 @@ import { FiEdit2 } from 'react-icons/fi';
 import { TODO_STATUS_MAP } from '../constants/todoStatus';
 import { getTodoById } from '../queries/getTodoById.query';
 import DeleteTodoButton from './DeleteTodoButton';
+import DueDateBadge from './DueDateBadge';
 import TodoContentViewer from './TodoContentViewer';
 
 interface TodoDetailProps {
@@ -36,14 +37,14 @@ export default async function TodoDetail({
     }
 
     return (
-        <article className="rounded-2xl border p-6">
+        <article className="paper-panel p-6 sm:p-8">
             <div className="mb-2 flex items-start justify-between gap-2">
-                <span className="inline-block rounded-full bg-muted px-3 py-1 text-xs font-medium">
+                <span className="status-chip" data-status={todo.status}>
                     {TODO_STATUS_MAP[todo.status]}
                 </span>
                 <div className="flex items-start gap-2">
                     <Link href={`/todo/${todo.id}/edit`}>
-                        <Button variant="outline" size="sm">
+                        <Button className="btn-soft" size="sm">
                             <FiEdit2 />
                             수정
                         </Button>
@@ -52,9 +53,11 @@ export default async function TodoDetail({
                     <DeleteTodoButton id={todo.id} title={todo.title} />
                 </div>
             </div>
-            <h1 className="mb-4 text-2xl font-bold">{todo.title}</h1>
+            <h1 className="font-cute mb-4 break-all text-2xl text-[#65564B]">{todo.title}</h1>
 
-            <dl className="mb-6 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <dl className="mb-6 grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                <dt>마감일</dt>
+                <DueDateBadge id={todo.id} />
                 <dt>작성일</dt>
                 <dd>{formatDate(todo.createdAt)}</dd>
                 <dt>수정일</dt>

@@ -1,13 +1,26 @@
 'use client';
 
-import EmptyState from '@/shared/components/EmptyState';
 import { Button } from '@/shared/components/ui/button';
+import { useDayPeriod } from '@/shared/hooks/useDayPeriod';
+import { LayoutGroup, MotionConfig } from 'motion/react';
 import Link from 'next/link';
-import { useOptimistic, useTransition } from 'react';
+import { useOptimistic, useState, useTransition } from 'react';
 import { changeTodoStatus } from '../actions/todo.actions';
+import { useBunnyDialogue } from '../hooks/useBunnyDialogue';
+import { useBunnyState } from '../hooks/useBunnyState';
+import { useTodoPriority } from '../hooks/useTodoPriority';
+import { useBunnyStore } from '../stores/useBunnyStore';
+import { getHatTier, useStickerStore } from '../stores/useStickerStore';
 import type { Todo, TodoStatus } from '../types/todo.types';
-import { STATUS_ORDER, TODO_STATUS_MAP } from '../constants/todoStatus';
+import BunnyCelebration from './bunny/BunnyCelebration';
+import { BunnyBedroom, SleepingBubbles } from './bunny/BunnySleepingAnimation';
+import BunnySpeechBubble from './bunny/BunnySpeechBubble';
+import BunnyStage from './bunny/BunnyStage';
+import DoneShelf from './DoneShelf';
+import MeadowBackground from './meadow/MeadowBackground';
 import TodoItems from './TodoItems';
+import TodoSummary, { type TodoTab } from './TodoSummary';
+import UrgentToast from './UrgentToast';
 
 interface TodoDashBoardProps {
     initialItems: Todo[];
@@ -18,6 +31,7 @@ interface OptimisticUpdateType {
     nextStatus: TodoStatus;
 }
 
+// Bunny Post 메인 화면: 동화 속 마을 + 구름 위 할 일 + 토끼 배달원
 export default function TodoDashBoard({
     initialItems,
 }: TodoDashBoardProps): React.JSX.Element {
@@ -34,68 +48,151 @@ export default function TodoDashBoard({
             ),
     );
 
-    const onClick = (id: string, status: TodoStatus) => {
-        // 이미 동일한 상태인 경우 불필요한 요청 방지
+    // 마감 정보 + 정렬
+    const priority = useTodoPriority(optimisticItems);
+    // 토끼 상태 (하나의 훅에서 계산)
+    const { mode, parcel, celebration, talk, expression, endUrgent } = useBunnyState(priority);
+
+    const deliveryQueue = useBunnyStore((state) => state.deliveryQueue);
+    const celebrate = useBunnyStore((state) => state.celebrate);
+    const cancelCelebration = useBunnyStore((state) => state.cancelCelebration);
+
+    const stickersHydrated = useStickerStore((state) => state._hasHydrated);
+    const stars = useStickerStore((state) => (stickersHydrated ? state.stars : 0));
+    const addStar = useStickerStore((state) => state.addStar);
+    const hatTier = getHatTier(stars);
+
+    const { talkNow } = useBunnyDialogue({
+        activeCount: priority.active.length,
+        doneCount: priority.done.length,
+        urgentCount: priority.urgent.length,
+    });
+
+    const period = useDayPeriod();
+    const [tab, setTab] = useState<TodoTab>('all');
+
+    /**
+     * 상태 변경 (기존 기능 그대로)
+     * UI를 먼저 바꾸고 서버에 저장 → 실패하면 startTransition이 끝나며 자동으로 원래 상태로 복구돼요.
+     */
+    const changeStatus = (
+        id: string,
+        status: TodoStatus,
+        callbacks?: { onSuccess?: () => void; onError?: () => void },
+    ) => {
         const currentItem = optimisticItems.find((item) => item.id === id);
-        if (currentItem && currentItem.status === status) {
-            return;
-        }
+        if (currentItem && currentItem.status === status) return;
 
         startTransition(async () => {
-            // UI 즉시 반영(낙관적 상태로 선반영)
             setOptimisticItems({ id, nextStatus: status });
             try {
-                // 서버에 상태 반영 → 서버가 revalidatePath로 최신 목록(initialItems)을 다시 보내 줍니다.
                 await changeTodoStatus(id, status);
+                callbacks?.onSuccess?.();
             } catch (error) {
-                // 실패 시 startTransition이 끝나면서 자동으로 initialItems(원래 상태)로 롤백됨
                 console.error('상태 변경 실패:', error);
-                alert(
-                    '할일 상태 변경에 실패하였습니다. 잠시 후 다시 시도하세요.',
-                );
+                callbacks?.onError?.();
+                alert('할일 상태 변경에 실패하였습니다. 잠시 후 다시 시도하세요.');
             }
         });
     };
 
-    return (
-        <>
-            <div className="border-b pb-3 mb-4 flex justify-between">
-                <Link href="/todo/pin">
-                    <Button>찜목록</Button>
-                </Link>
+    // 완료: 토끼 축하 → 서버 저장 성공 시 별 스티커, 실패 시 축하 취소 + 카드 복구
+    const onComplete = (id: string, title: string) => {
+        celebrate(id, title);
+        changeStatus(id, 'DONE', {
+            onSuccess: addStar,
+            onError: () => cancelCelebration(id),
+        });
+    };
 
-                <Link href="/todo/new">
-                    <Button>할일 등록하기</Button>
-                </Link>
-            </div>
-            {/* 백그라운드 동기화 상태 표시 */}
-            {isPending && (
-                <span className="text-sm text-muted-foreground animate-pulse">
-                    서버와 동기화 중...
-                </span>
-            )}
-            {/* 빈 데이터 상태: 할 일이 하나도 없으면 상태별 목록 대신 안내 화면을 보여줍니다. */}
-            {optimisticItems.length === 0 ? (
-                <EmptyState
-                    title="아직 등록된 할 일이 없어요."
-                    description="첫 번째 할 일을 등록해 보세요!"
-                    actionHref="/todo/new"
-                    actionLabel="할 일 등록하기"
-                />
-            ) : (
-                // 목록 렌더링: 상태 3개(준비중/진행중/완료)를 map으로 반복해서 그립니다.
-                // key에는 바뀌지 않는 고유값(status)을 사용합니다.
-                STATUS_ORDER.map((status) => (
-                    <section key={status} className="border-b p-4 m-4">
-                        <h2>{TODO_STATUS_MAP[status]}</h2>
-                        <TodoItems
-                            status={status}
-                            items={optimisticItems}
-                            onClick={onClick}
+    const hiddenIds = deliveryQueue.map((p) => p.id);
+    const entries = tab === 'all' ? priority.active : priority.today;
+    const letters = priority.active.filter((p) => p.todo.status === 'READY').length;
+
+    return (
+        <MotionConfig reducedMotion="user">
+            <LayoutGroup>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                    <Link href="/todo/pin">
+                        <Button className="btn-soft">💖 찜목록</Button>
+                    </Link>
+                    <Link href="/todo/new">
+                        <Button className="btn-bunny">💌 할 일 맡기기</Button>
+                    </Link>
+                </div>
+
+                <MeadowBackground
+                    period={period}
+                    bedroom={mode === 'sleeping' ? <BunnyBedroom /> : undefined}
+                    cottageOverlay={
+                        mode === 'sleeping' ? (
+                            <>
+                                <SleepingBubbles />
+                                <BunnySpeechBubble
+                                    className="spot-cottage-bubble absolute z-30"
+                                    message={
+                                        <p className="font-cute text-base">
+                                            아직 10일 남았어요. 천천히 해도 괜찮아요! 💤
+                                        </p>
+                                    }
+                                    messageKey="sleeping"
+                                    tone="sleepy"
+                                    tail="left"
+                                />
+                            </>
+                        ) : undefined
+                    }
+                    stage={
+                        <BunnyStage
+                            mode={mode}
+                            parcel={parcel}
+                            celebration={celebration}
+                            talk={talk}
+                            expression={expression}
+                            hatTier={hatTier}
+                            urgentTop={priority.urgent[0]}
+                            letters={letters}
+                            isEmpty={optimisticItems.length === 0}
+                            onUrgentEnd={endUrgent}
+                            onBunnyClick={talkNow}
                         />
-                    </section>
-                ))
-            )}
-        </>
+                    }
+                >
+                    <TodoSummary
+                        activeCount={priority.active.length}
+                        doneCount={priority.done.length}
+                        urgentCount={priority.urgent.length}
+                        todayCount={priority.today.length}
+                        stars={stars}
+                        hatTier={hatTier}
+                        tab={tab}
+                        onTabChange={setTab}
+                    />
+
+                    {/* 백그라운드 동기화 상태 표시 */}
+                    <p className="mt-2 h-5 text-sm text-[#65564B]/70" aria-live="polite">
+                        {isPending && <span className="animate-pulse">☁️ 구름과 동기화 중...</span>}
+                    </p>
+
+                    <TodoItems
+                        entries={entries}
+                        hiddenIds={hiddenIds}
+                        emptyMessage={
+                            tab === 'today'
+                                ? '오늘까지 해야 할 일은 없어요. 여유로운 하루!'
+                                : '하늘이 맑아요! 토끼에게 할 일을 맡겨 보세요.'
+                        }
+                        onChangeStatus={changeStatus}
+                        onComplete={onComplete}
+                    />
+
+                    <DoneShelf entries={priority.done} onRestore={(id) => changeStatus(id, 'READY')} />
+
+                    <BunnyCelebration eventKey={mode === 'celebrating' && celebration ? celebration.key : null} />
+                </MeadowBackground>
+
+                <UrgentToast active={mode === 'urgent'} urgent={priority.urgent} />
+            </LayoutGroup>
+        </MotionConfig>
     );
 }

@@ -10,15 +10,15 @@ export default function TodoEditPage({
     params,
 }: PageProps<'/todo/[id]/edit'>): React.JSX.Element {
     return (
-        <div className="space-y-4">
-            <h1 className="text-xl font-bold">할 일 수정</h1>
+        <div className="paper-panel mx-auto max-w-2xl space-y-4 p-5 sm:p-8">
+            <h1 className="font-cute text-2xl text-[#65564B]">✏️ 편지 고쳐 쓰기</h1>
 
             {/* id가 필요한 부분만 Suspense로 감싸고, 나머지는 바로 보여줍니다. */}
             <Suspense
                 fallback={
                     <div
                         role="status"
-                        className="h-64 animate-pulse rounded-2xl bg-muted"
+                        className="h-64 animate-pulse rounded-3xl bg-[#F5ECDC]"
                     />
                 }
             >
@@ -46,9 +46,7 @@ async function TodoEditSection({
     return (
         <>
             <Link href={`/todo/${todo.id}/view`}>
-                <Button variant="outline" size="sm">
-                    ← 취소
-                </Button>
+                <Button className="btn-soft">← 취소</Button>
             </Link>
             {/* 폼에 필요한 값만 골라서 넘깁니다. */}
             <TodoForm

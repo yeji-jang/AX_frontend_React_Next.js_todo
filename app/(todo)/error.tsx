@@ -1,8 +1,8 @@
 'use client'; // 오류 화면은 "다시 시도" 버튼 클릭을 처리해야 하므로 반드시 클라이언트 컴포넌트입니다.
 
+import BunnyCharacter from '@/domains/todo/components/bunny/BunnyCharacter';
 import { Button } from '@/shared/components/ui/button';
 import { useEffect } from 'react';
-import { FiAlertCircle } from 'react-icons/fi';
 
 interface TodoErrorProps {
     /** 페이지에서 throw된 값 (Error가 아닐 수도 있어서 unknown) */
@@ -22,17 +22,16 @@ export default function TodoError({
     }, [error]);
 
     return (
-        <div
-            role="alert"
-            className="flex flex-col items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-10 text-center text-red-600"
-        >
-            <FiAlertCircle className="h-8 w-8" />
-            <p className="font-medium">문제가 발생했어요.</p>
-            <p className="text-sm">
+        <div role="alert" className="paper-panel flex flex-col items-center gap-3 px-6 py-12 text-center">
+            <div className="w-[96px]">
+                <BunnyCharacter expression="worried" holding="newspaper" className="h-auto w-full" />
+            </div>
+            <p className="font-cute text-xl text-[#65564B]">앗, 편지가 길을 잃었어요!</p>
+            <p className="text-sm text-[#75655A]">
                 잠시 후 다시 시도해 주세요. 문제가 계속되면 새로고침해 주세요.
             </p>
-            <Button variant="outline" onClick={() => retry()}>
-                다시 시도
+            <Button className="btn-bunny mt-2" onClick={() => retry()}>
+                🔄 다시 시도
             </Button>
         </div>
     );

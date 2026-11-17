@@ -45,6 +45,7 @@ Supabase Auth · Database를 연동해 고도화한 프로젝트입니다.
 | ✏️ **수정 / 🗑️ 삭제** | 등록 폼을 Props로 재사용한 수정 화면, 확인 창 후 soft delete |
 | ⏳ **상태별 UI** | `loading.tsx`(스켈레톤), `error.tsx`(다시 시도), `EmptyState`(빈 목록 안내) |
 | ⭐ **찜하기** | Zustand persist 스토어로 찜 목록 관리 (`/todo/pin`) |
+| 🐰 **Bunny Post 리디자인** | 동화 속 마을(하늘·들판·집·빨간 우체통) + 구름 위 할 일 카드 + 토끼 배달원. 등록 시 배달 애니메이션, 3일 이내 긴급 모드(신문 뿌리기·토스트), 정확히 10일 남으면 침대에서 휴식, 랜덤 대화, 완료 축하 + 별 스티커/모자 |
 
 ---
 
@@ -235,3 +236,16 @@ npm run dev
 - [x] `TodoDashBoard`에서 Props를 `useState`에 복사하던 코드 제거 → `useOptimistic(initialItems)` + `revalidatePath`로 서버 데이터와 동기화
 - [x] 조회 함수(`getTodos`, `getTodoById`)의 불필요한 `'use server'` 제거 (Server Action에만 사용)
 - [x] `tsc`, `eslint`, `next build` 모두 오류·경고 0개
+
+### 🐰 Bunny Post 리디자인
+
+- [x] 마감일 입력 (등록/수정 폼, 브라우저 저장 `useDueDateStore` — DB 구조는 그대로)
+- [x] 정렬: 마감 가까운 순 → 생성일 순 → 마감일 없음은 뒤, 완료는 "완료 보관함"으로 분리 (`utils/todoPriority.ts`)
+- [x] 토끼 상태 통합 (`hooks/useBunnyState.ts`): celebrating > delivering > urgent > talking > sleeping > idle, 배달 중에는 다른 상태로 전환하지 않음
+- [x] 배달: DB 저장 성공 후에만 대기열에 추가 → 우체통에서 등장 → 편지를 구름 카드로 (Motion `layoutId`)
+- [x] 긴급(0~3일·지남): 집 주변을 뛰며 신문 뿌리기 1회, 토스트 1회, 카드 코랄 강조
+- [x] 휴식(정확히 10일, 긴급 없을 때): 집 침실 창문 안 침대 + Zzz
+- [x] 랜덤 대화(25초 후 첫 방문, 1~2분 간격, 조작 중엔 미룸) + 토끼 클릭 시 대화
+- [x] 완료: 카드가 떠오르며 별 반짝 → 토끼 점프 → 별 스티커 +1 (실패 시 축하 취소 + 카드 복구)
+- [x] 추가: 우체통 위 편지 쌓임, 별 스티커로 모자 변경, 시간대별 하늘(아침/낮/저녁/밤)
+- [x] 로딩·오류·빈 화면, 로그인/회원가입/상세/수정/찜 페이지 테마 적용, `prefers-reduced-motion` 지원

@@ -21,17 +21,15 @@ export default function EmptyState({
     actionLabel,
 }: EmptyStateProps): React.JSX.Element {
     return (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed p-10 text-center">
-            <p className="text-3xl" aria-hidden>
-                📭
+        <div className="paper-panel flex flex-col items-center gap-2 px-6 py-12 text-center">
+            <p className="text-4xl" aria-hidden>
+                📭🐰
             </p>
-            <p className="font-medium">{title}</p>
-            {description && (
-                <p className="text-sm text-muted-foreground">{description}</p>
-            )}
+            <p className="font-cute text-xl text-[#65564B]">{title}</p>
+            {description && <p className="text-sm text-[#75655A]">{description}</p>}
             {actionHref && actionLabel && (
-                <Link href={actionHref} className="mt-2">
-                    <Button>{actionLabel}</Button>
+                <Link href={actionHref} className="mt-3">
+                    <Button className="btn-bunny">{actionLabel}</Button>
                 </Link>
             )}
         </div>
