@@ -14,7 +14,7 @@ Supabase Auth · Database를 연동해 고도화한 프로젝트입니다.
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-Deploy-000000?logo=vercel&logoColor=white)
 
-🔗 **배포 주소**: [https://ax-frontend-react-next-js-practice.vercel.app](https://ax-frontend-react-next-js-practice.vercel.app)
+🔗 **배포 주소**: [https://ax-frontend-react-next-js-practice.vercel.app](https://ax-frontend-react-next-js-todo-7fot.vercel.app/)
 
 </div>
 
