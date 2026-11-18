@@ -3,7 +3,7 @@
 import { useAnimate, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { useBunnyStore } from '../../stores/useBunnyStore';
-import type { HatTier } from '../../stores/useStickerStore';
+import type { HatId } from '@/domains/shop/types/shop.types';
 import type {
     BunnyExpression,
     BunnyHolding,
@@ -40,7 +40,8 @@ interface BunnyStageProps {
     talk: BunnyTalk | null;
     /** 평소 표정 */
     expression: BunnyExpression;
-    hatTier: HatTier;
+    /** 잡화점에서 산 모자 */
+    hat: HatId;
     /** 가장 급한 할 일 (긴급 알림 문구용) */
     urgentTop?: PrioritizedTodo;
     /** 준비중인 할 일 수 (우체통 위 편지) */
@@ -62,7 +63,7 @@ export default function BunnyStage({
     celebration,
     talk,
     expression,
-    hatTier,
+    hat,
     urgentTop,
     letters,
     isEmpty,
@@ -228,7 +229,7 @@ export default function BunnyStage({
                             holding={holding}
                             hopping={busy}
                             waving={mode === 'idle' || mode === 'talking'}
-                            hatTier={hatTier}
+                            hat={hat}
                             className="h-auto w-full"
                         />
                     </button>

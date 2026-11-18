@@ -41,15 +41,6 @@ export default function BunnyCelebration({ eventKey }: BunnyCelebrationProps) {
                             ★
                         </motion.span>
                     ))}
-
-                    <motion.div
-                        className="sticker-badge"
-                        initial={{ scale: 0, rotate: -20, opacity: 0 }}
-                        animate={{ scale: [0, 1.2, 1], rotate: [-20, 8, 0], opacity: 1 }}
-                        transition={{ duration: 0.6, delay: 0.2 }}
-                    >
-                        ⭐ 별 스티커 +1
-                    </motion.div>
                 </motion.div>
             )}
         </AnimatePresence>

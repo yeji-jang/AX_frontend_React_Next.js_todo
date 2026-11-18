@@ -3,7 +3,7 @@
 import { motion, type TargetAndTransition, type Transition } from 'motion/react';
 import { useId } from 'react';
 import { cn } from '@/shared/utils/cn';
-import type { HatTier } from '../../stores/useStickerStore';
+import type { HatId } from '@/domains/shop/types/shop.types';
 import type { BunnyExpression, BunnyHolding } from '../../types/bunny';
 
 interface BunnyCharacterProps {
@@ -13,8 +13,8 @@ interface BunnyCharacterProps {
     hopping?: boolean;
     /** 손 흔들기 */
     waving?: boolean;
-    /** 별 스티커로 받은 모자 단계 */
-    hatTier?: HatTier;
+    /** 쓰고 있는 모자 (잡화점에서 산 모자) */
+    hat?: HatId;
     className?: string;
 }
 
@@ -59,7 +59,7 @@ export default function BunnyCharacter({
     holding = 'none',
     hopping = false,
     waving = false,
-    hatTier = 0,
+    hat = 'cap',
     className,
 }: BunnyCharacterProps) {
     const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
@@ -92,6 +92,11 @@ export default function BunnyCharacter({
                     <stop offset="0" stopColor="#FFF1C7" />
                     <stop offset="0.6" stopColor="#F4D58F" />
                     <stop offset="1" stopColor="#D9B061" />
+                </radialGradient>
+                <radialGradient id={id('gold')} cx="0.35" cy="0.25" r="0.9">
+                    <stop offset="0" stopColor="#FFF6C8" />
+                    <stop offset="0.55" stopColor="#FFD54F" />
+                    <stop offset="1" stopColor="#E0A42E" />
                 </radialGradient>
                 <radialGradient id={id('shine')}>
                     <stop offset="0" stopColor="#fff" stopOpacity="0.95" />
@@ -142,7 +147,7 @@ export default function BunnyCharacter({
                 <ellipse cx="60" cy="82" rx="36" ry="32" fill={url('fur')} />
                 <ellipse cx="44" cy="68" rx="10" ry="6" fill={url('shine')} transform="rotate(-25 44 68)" />
 
-                <Hat tier={hatTier} capFill={url('cap')} strawFill={url('straw')} shineFill={url('shine')} />
+                <Hat hat={hat} capFill={url('cap')} strawFill={url('straw')} goldFill={url('gold')} shineFill={url('shine')} />
 
                 <BunnyFace expression={expression} />
 
@@ -153,49 +158,106 @@ export default function BunnyCharacter({
 }
 
 function Hat({
-    tier,
+    hat,
     capFill,
     strawFill,
+    goldFill,
     shineFill,
 }: {
-    tier: HatTier;
+    hat: HatId;
     capFill: string;
     strawFill: string;
+    goldFill: string;
     shineFill: string;
 }) {
-    if (tier === 2) {
-        // 밀짚 모자
-        return (
-            <>
-                <ellipse cx="60" cy="62" rx="44" ry="9" fill={strawFill} />
-                <path d="M36 62 C36 32 84 32 84 62 Z" fill={strawFill} />
-                <path d="M36.5 55 Q60 50 83.5 55 L84 61 Q60 56 36 61 Z" fill="#F28B82" />
-                <circle cx="78" cy="56" r="4.5" fill="#FFF4DC" />
-                <circle cx="78" cy="56" r="2" fill="#F2C14E" />
-                <ellipse cx="50" cy="42" rx="8" ry="3.5" fill={shineFill} />
-            </>
-        );
+    switch (hat) {
+        case 'straw':
+            return (
+                <>
+                    <ellipse cx="60" cy="62" rx="44" ry="9" fill={strawFill} />
+                    <path d="M36 62 C36 32 84 32 84 62 Z" fill={strawFill} />
+                    <path d="M36.5 55 Q60 50 83.5 55 L84 61 Q60 56 36 61 Z" fill="#F28B82" />
+                    <circle cx="78" cy="56" r="4.5" fill="#FFF4DC" />
+                    <circle cx="78" cy="56" r="2" fill="#F2C14E" />
+                    <ellipse cx="50" cy="42" rx="8" ry="3.5" fill={shineFill} />
+                </>
+            );
+        case 'sprout':
+            return (
+                <>
+                    <path d="M27 72 Q60 38 93 72" stroke="#F2C14E" strokeWidth="4.5" fill="none" strokeLinecap="round" />
+                    <path d="M60 55 Q59 44 61 34" stroke="#6BAF4F" strokeWidth="3" fill="none" strokeLinecap="round" />
+                    <ellipse cx="53" cy="35" rx="9" ry="5" fill="#8FD16F" transform="rotate(-28 53 35)" />
+                    <ellipse cx="69" cy="31" rx="10" ry="5.5" fill="#A8D68B" transform="rotate(24 69 31)" />
+                    <path d="M47 37 L58 34 M63 30 L76 33" stroke="#6BAF4F" strokeWidth="1.2" strokeLinecap="round" />
+                </>
+            );
+        case 'beret':
+            return (
+                <>
+                    <path d="M59 44 L61 36" stroke="#B5525E" strokeWidth="3.5" strokeLinecap="round" />
+                    <ellipse cx="58" cy="54" rx="36" ry="13" fill="#E0707A" transform="rotate(-8 58 54)" />
+                    <path d="M28 62 Q58 68 89 55" stroke="#B5525E" strokeWidth="4" fill="none" strokeLinecap="round" />
+                    <ellipse cx="46" cy="49" rx="10" ry="3.5" fill={shineFill} transform="rotate(-10 46 49)" />
+                </>
+            );
+        case 'party':
+            return (
+                <>
+                    <path d="M43 60 L62 12 L80 58 Q61 66 43 60 Z" fill="#FFB3C7" />
+                    <path d="M48 48 L75 46 M54 33 L70 32" stroke="#FFF8EE" strokeWidth="4" strokeLinecap="round" />
+                    <circle cx="57" cy="55" r="2.6" fill="#7CB7E8" />
+                    <circle cx="70" cy="54" r="2.6" fill="#7CB7E8" />
+                    <circle cx="62" cy="40" r="2.2" fill="#A8D68B" />
+                    <circle cx="62" cy="12" r="6" fill="#FFE27A" />
+                    <circle cx="60" cy="10" r="2" fill="#fff" opacity="0.8" />
+                </>
+            );
+        case 'crown':
+            return (
+                <>
+                    <path
+                        d="M37 60 L36 34 L48 45 L60 27 L72 45 L84 34 L83 60 Q60 66 37 60 Z"
+                        fill={goldFill}
+                        stroke="#D49A2A"
+                        strokeWidth="1.5"
+                        strokeLinejoin="round"
+                    />
+                    <circle cx="36" cy="33" r="3.2" fill="#FFF1B8" />
+                    <circle cx="60" cy="26" r="3.6" fill="#FFF1B8" />
+                    <circle cx="84" cy="33" r="3.2" fill="#FFF1B8" />
+                    {/* 가운데 당근 보석 */}
+                    <path d="M60 58 L55 47 Q60 43 65 47 Z" fill="#F59A4A" />
+                    <path d="M58 45 L57 41 M60 44 L60 40 M62 45 L63 41" stroke="#6BAF4F" strokeWidth="1.6" strokeLinecap="round" />
+                    <circle cx="46" cy="54" r="2.6" fill="#7CB7E8" />
+                    <circle cx="74" cy="54" r="2.6" fill="#FF8FA3" />
+                    <ellipse cx="45" cy="43" rx="4" ry="2" fill={shineFill} />
+                </>
+            );
+        case 'cap':
+        case 'flower':
+        default:
+            return (
+                <>
+                    {/* 배달원 모자 */}
+                    <path d="M30 66 C30 36 90 36 90 66 Z" fill={capFill} />
+                    <ellipse cx="75" cy="66" rx="20" ry="5" fill="#4F8CC9" />
+                    <ellipse cx="48" cy="47" rx="8" ry="3.5" fill={shineFill} />
+                    <circle cx="60" cy="52" r="6.5" fill="#FFF8EE" />
+                    <path d="M56 50 H64 V55 H56 Z" fill="#F28B82" />
+                    <path d="M56 50 L60 53 L64 50" stroke="#fff" strokeWidth="1" fill="none" />
+                    {hat === 'flower' && (
+                        // 꽃 장식
+                        <g transform="translate(38 50)">
+                            {[0, 72, 144, 216, 288].map((deg) => (
+                                <ellipse key={deg} cx="0" cy="-5" rx="3.6" ry="4.6" fill="#FFB3C7" transform={`rotate(${deg})`} />
+                            ))}
+                            <circle r="3" fill="#FFE27A" />
+                        </g>
+                    )}
+                </>
+            );
     }
-    return (
-        <>
-            {/* 배달원 모자 */}
-            <path d="M30 66 C30 36 90 36 90 66 Z" fill={capFill} />
-            <ellipse cx="75" cy="66" rx="20" ry="5" fill="#4F8CC9" />
-            <ellipse cx="48" cy="47" rx="8" ry="3.5" fill={shineFill} />
-            <circle cx="60" cy="52" r="6.5" fill="#FFF8EE" />
-            <path d="M56 50 H64 V55 H56 Z" fill="#F28B82" />
-            <path d="M56 50 L60 53 L64 50" stroke="#fff" strokeWidth="1" fill="none" />
-            {tier === 1 && (
-                // 꽃 장식
-                <g transform="translate(38 50)">
-                    {[0, 72, 144, 216, 288].map((deg) => (
-                        <ellipse key={deg} cx="0" cy="-5" rx="3.6" ry="4.6" fill="#FFB3C7" transform={`rotate(${deg})`} />
-                    ))}
-                    <circle r="3" fill="#FFE27A" />
-                </g>
-            )}
-        </>
-    );
 }
 
 function BunnyFace({ expression }: { expression: BunnyExpression }) {

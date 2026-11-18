@@ -1,7 +1,16 @@
 'use client';
 
 import { cn } from '@/shared/utils/cn';
-import { getStarsToNextHat, HAT_LEVELS, type HatTier } from '../stores/useStickerStore';
+import { SHOP_ITEMS } from '@/domains/shop/constants/shopCatalog';
+import Link from 'next/link';
+
+/** 다음 별 선물(별 스티커가 필요한 잡화점 물건)까지 남은 별 수 */
+function getNextStarGift(stars: number) {
+    const next = SHOP_ITEMS.filter((item) => item.requiresStars && item.requiresStars > stars).sort(
+        (a, b) => (a.requiresStars ?? 0) - (b.requiresStars ?? 0),
+    )[0];
+    return next ? { name: next.name, left: (next.requiresStars ?? 0) - stars } : null;
+}
 
 export type TodoTab = 'all' | 'today';
 
@@ -11,7 +20,6 @@ interface TodoSummaryProps {
     urgentCount: number;
     todayCount: number;
     stars: number;
-    hatTier: HatTier;
     tab: TodoTab;
     onTabChange: (tab: TodoTab) => void;
 }
@@ -23,11 +31,10 @@ export default function TodoSummary({
     urgentCount,
     todayCount,
     stars,
-    hatTier,
     tab,
     onTabChange,
 }: TodoSummaryProps) {
-    const toNext = getStarsToNextHat(stars);
+    const nextGift = getNextStarGift(stars);
 
     return (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -37,11 +44,14 @@ export default function TodoSummary({
                 {urgentCount > 0 && (
                     <li className="stat-chip stat-chip--urgent">🚨 긴급 <strong>{urgentCount}</strong></li>
                 )}
-                <li
-                    className="stat-chip"
-                    title={toNext === null ? '모든 모자를 모았어요!' : `다음 모자까지 별 ${toNext}개`}
-                >
-                    ⭐ <strong>{stars}</strong> · {HAT_LEVELS[hatTier].name}
+                <li className="stat-chip">
+                    <Link
+                        href="/shop"
+                        title={nextGift ? `별 ${nextGift.left}개 더 모으면 '${nextGift.name}'을(를) 받을 수 있어요` : '별 선물을 모두 받을 수 있어요!'}
+                    >
+                        ⭐ <strong>{stars}</strong>
+                        {nextGift && <span className="text-[#75655A]"> · 선물까지 {nextGift.left}</span>}
+                    </Link>
                 </li>
             </ul>
 

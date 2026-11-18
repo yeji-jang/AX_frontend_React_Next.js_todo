@@ -3,6 +3,8 @@
 import { AnimatePresence, motion, useIsPresent } from 'motion/react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { DEFAULT_PAPER } from '@/domains/shop/constants/shopCatalog';
+import { useShopStore } from '@/domains/shop/stores/useShopStore';
 import { cn } from '@/shared/utils/cn';
 import { TODO_STATUS_MAP } from '../constants/todoStatus';
 import { useBunnyStore } from '../stores/useBunnyStore';
@@ -57,6 +59,9 @@ export default function TodoItem({ entry, onChangeStatus, onComplete }: TodoItem
     const addPin = usePinStore((state) => state.add);
     const removePin = usePinStore((state) => state.remove);
 
+    // 잡화점에서 고른 편지지 무늬
+    const paper = useShopStore((state) => (state._hasHydrated ? state.equippedPaper : DEFAULT_PAPER));
+
     const nextStatus: TodoStatus = status === 'READY' ? 'PROGRESS' : 'READY';
 
     return (
@@ -87,7 +92,7 @@ export default function TodoItem({ entry, onChangeStatus, onComplete }: TodoItem
                     floatDelay={layout.floatDelay}
                 />
 
-                <article className="memo-card" data-tone={tone}>
+                <article className="memo-card" data-tone={tone} data-paper={paper}>
                     <div className="mb-2 flex items-center justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-1.5">
                             {ddayLabel && (

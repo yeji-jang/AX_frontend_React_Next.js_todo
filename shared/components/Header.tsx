@@ -1,4 +1,5 @@
 import SignOutButton from '@/domains/auth/components/SignOutButton';
+import CarrotWallet from '@/domains/shop/components/CarrotWallet';
 import { getCurrentUser } from '@/domains/auth/queries/getCurrentUser.query';
 import { Button } from '@/shared/components/ui/button';
 import Link from 'next/link';
@@ -23,8 +24,9 @@ export default async function Header(): Promise<React.JSX.Element> {
             <div className="flex shrink-0 items-center gap-2 text-sm">
                 {user ? (
                     <>
-                        <FiUser className="h-3.5 w-3.5 text-[#A98268]" />
-                        <span>{user.name}님</span>
+                        <CarrotWallet />
+                        <FiUser className="hidden h-3.5 w-3.5 text-[#A98268] sm:block" />
+                        <span className="hidden sm:inline">{user.name}님</span>
                         <SignOutButton />
                     </>
                 ) : (

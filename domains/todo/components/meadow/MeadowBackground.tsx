@@ -1,5 +1,7 @@
 'use client';
 
+import VillageDecor from '@/domains/shop/components/decor/VillageDecor';
+import type { DecorId } from '@/domains/shop/types/shop.types';
 import type { DayPeriod } from '../../types/bunny';
 import Cottage from './Cottage';
 import { Birds, Butterfly, Flower, Hills, Tree } from './MeadowDecor';
@@ -14,6 +16,8 @@ interface MeadowBackgroundProps {
     bedroom?: React.ReactNode;
     /** 집 위에 띄울 말풍선 등 */
     cottageOverlay?: React.ReactNode;
+    /** 잡화점에서 사서 마을에 놓은 소품 */
+    decor?: DecorId[];
 }
 
 /**
@@ -28,6 +32,7 @@ export default function MeadowBackground({
     stage,
     bedroom,
     cottageOverlay,
+    decor = [],
 }: MeadowBackgroundProps) {
     return (
         <section className="bunny-world" data-period={period} aria-label="Bunny Post 마을">
@@ -39,6 +44,7 @@ export default function MeadowBackground({
                 <div className="sky-cloud sky-cloud--2" />
                 <div className="sky-cloud sky-cloud--3" />
                 {period !== 'night' && <Birds className="w-[56px]" />}
+                <VillageDecor placed={decor} layer="sky" period={period} />
             </div>
 
             {/* ── 하늘: 할 일 ── */}
@@ -49,6 +55,8 @@ export default function MeadowBackground({
                 <Hills className="absolute inset-0 h-full w-full" />
                 <Tree className="spot-tree-left absolute hidden sm:block" />
                 <Tree className="spot-tree-right absolute hidden sm:block" fruit="#FFD45C" />
+
+                <VillageDecor placed={decor} layer="ground" period={period} />
 
                 <div className="spot-cottage absolute">
                     <Cottage period={period} className="relative">

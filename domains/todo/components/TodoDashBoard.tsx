@@ -10,7 +10,11 @@ import { useBunnyDialogue } from '../hooks/useBunnyDialogue';
 import { useBunnyState } from '../hooks/useBunnyState';
 import { useTodoPriority } from '../hooks/useTodoPriority';
 import { useBunnyStore } from '../stores/useBunnyStore';
-import { getHatTier, useStickerStore } from '../stores/useStickerStore';
+import RewardReceipt from '@/domains/shop/components/RewardReceipt';
+import { DEFAULT_HAT } from '@/domains/shop/constants/shopCatalog';
+import { useShopStore } from '@/domains/shop/stores/useShopStore';
+import { useShallow } from 'zustand/react/shallow';
+import { useStickerStore } from '../stores/useStickerStore';
 import type { Todo, TodoStatus } from '../types/todo.types';
 import BunnyCelebration from './bunny/BunnyCelebration';
 import { BunnyBedroom, SleepingBubbles } from './bunny/BunnySleepingAnimation';
@@ -59,8 +63,12 @@ export default function TodoDashBoard({
 
     const stickersHydrated = useStickerStore((state) => state._hasHydrated);
     const stars = useStickerStore((state) => (stickersHydrated ? state.stars : 0));
-    const addStar = useStickerStore((state) => state.addStar);
-    const hatTier = getHatTier(stars);
+
+    // 잡화점에서 산 모자 · 마을 소품 (저장소를 다 읽기 전에는 기본 모습으로 그려요)
+    const shopHydrated = useShopStore((state) => state._hasHydrated);
+    const hat = useShopStore((state) => (shopHydrated ? state.equippedHat : DEFAULT_HAT));
+    const decor = useShopStore(useShallow((state) => (shopHydrated ? state.placedDecor : [])));
+    const claimReward = useShopStore((state) => state.claimReward);
 
     const { talkNow } = useBunnyDialogue({
         activeCount: priority.active.length,
@@ -96,11 +104,13 @@ export default function TodoDashBoard({
         });
     };
 
-    // 완료: 토끼 축하 → 서버 저장 성공 시 별 스티커, 실패 시 축하 취소 + 카드 복구
+    // 완료: 토끼 축하 → 서버 저장 성공 시 당근 + 별 스티커, 실패 시 축하 취소 + 카드 복구
+    // (당근은 서버 저장이 끝난 뒤에만 줘요. 실패했는데 당근을 받으면 안 되니까요.)
     const onComplete = (id: string, title: string) => {
+        const daysLeft = priority.active.find((p) => p.todo.id === id)?.daysLeft ?? null;
         celebrate(id, title);
         changeStatus(id, 'DONE', {
-            onSuccess: addStar,
+            onSuccess: () => claimReward({ id, title, daysLeft }),
             onError: () => cancelCelebration(id),
         });
     };
@@ -113,9 +123,14 @@ export default function TodoDashBoard({
         <MotionConfig reducedMotion="user">
             <LayoutGroup>
                 <div className="mb-4 flex items-center justify-between gap-3">
-                    <Link href="/todo/pin">
-                        <Button className="btn-soft">💖 찜목록</Button>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link href="/todo/pin">
+                            <Button className="btn-soft">💖 찜목록</Button>
+                        </Link>
+                        <Link href="/shop">
+                            <Button className="btn-soft">🛍️ 잡화점</Button>
+                        </Link>
+                    </div>
                     <Link href="/todo/new">
                         <Button className="btn-bunny">💌 할 일 맡기기</Button>
                     </Link>
@@ -123,6 +138,7 @@ export default function TodoDashBoard({
 
                 <MeadowBackground
                     period={period}
+                    decor={decor}
                     bedroom={mode === 'sleeping' ? <BunnyBedroom /> : undefined}
                     cottageOverlay={
                         mode === 'sleeping' ? (
@@ -149,7 +165,7 @@ export default function TodoDashBoard({
                             celebration={celebration}
                             talk={talk}
                             expression={expression}
-                            hatTier={hatTier}
+                            hat={hat}
                             urgentTop={priority.urgent[0]}
                             letters={letters}
                             isEmpty={optimisticItems.length === 0}
@@ -164,7 +180,6 @@ export default function TodoDashBoard({
                         urgentCount={priority.urgent.length}
                         todayCount={priority.today.length}
                         stars={stars}
-                        hatTier={hatTier}
                         tab={tab}
                         onTabChange={setTab}
                     />
@@ -189,6 +204,7 @@ export default function TodoDashBoard({
                     <DoneShelf entries={priority.done} onRestore={(id) => changeStatus(id, 'READY')} />
 
                     <BunnyCelebration eventKey={mode === 'celebrating' && celebration ? celebration.key : null} />
+                    <RewardReceipt />
                 </MeadowBackground>
 
                 <UrgentToast active={mode === 'urgent'} urgent={priority.urgent} />
