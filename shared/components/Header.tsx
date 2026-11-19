@@ -1,5 +1,6 @@
 import SignOutButton from '@/domains/auth/components/SignOutButton';
 import CarrotWallet from '@/domains/shop/components/CarrotWallet';
+import VillageSync from '@/domains/shop/components/VillageSync';
 import { getCurrentUser } from '@/domains/auth/queries/getCurrentUser.query';
 import { Button } from '@/shared/components/ui/button';
 import Link from 'next/link';
@@ -22,6 +23,8 @@ export default async function Header(): Promise<React.JSX.Element> {
                 </span>
             </Link>
             <div className="flex shrink-0 items-center gap-2 text-sm">
+                {/* 로그인한 사람의 마을(당근 · 물건)을 서버에서 불러와요. */}
+                <VillageSync userId={user?.id ?? null} />
                 {user ? (
                     <>
                         <CarrotWallet />

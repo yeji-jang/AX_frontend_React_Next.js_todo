@@ -44,4 +44,4 @@ export interface RewardReceipt {
     repeat: boolean;
 }
 
-export type PurchaseResult = 'ok' | 'owned' | 'insufficient' | 'locked';
+export type PurchaseResult = 'ok' | 'owned' | 'insufficient' | 'locked' | 'error';

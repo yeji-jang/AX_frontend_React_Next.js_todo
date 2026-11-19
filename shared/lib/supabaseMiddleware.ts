@@ -47,8 +47,9 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(homeUrl);
     }
 
-    // 비회원이 메인 또는 /todo로 시작하는 페이지에 접속할 경우 /sign_in?redirectUrl=...으로 리다이렉트
-    const isProtectedPath = pathname === '/' || pathname.startsWith('/todo');
+    // 비회원이 메인 · /todo · /shop · /friends · /village 페이지에 접속할 경우 /sign_in?redirectUrl=...으로 리다이렉트
+    const isProtectedPath =
+        pathname === '/' || ['/todo', '/shop', '/friends', '/village'].some((path) => pathname.startsWith(path));
 
     if (!user && isProtectedPath) {
         const signInUrl = request.nextUrl.clone();

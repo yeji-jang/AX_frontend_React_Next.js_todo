@@ -3,14 +3,13 @@
 import { AnimatePresence, motion, MotionConfig } from 'motion/react';
 import { useState } from 'react';
 import BunnyCharacter from '@/domains/todo/components/bunny/BunnyCharacter';
-import { useStickerStore } from '@/domains/todo/stores/useStickerStore';
 import { useDayPeriod } from '@/shared/hooks/useDayPeriod';
 import { cn } from '@/shared/utils/cn';
 import { CATEGORY_LABELS, SHOP_ITEMS } from '../constants/shopCatalog';
 import { useShopStore } from '../stores/useShopStore';
 import type { DayPeriod } from '@/domains/todo/types/bunny';
 import type { HatId, ShopCategory, ShopItem } from '../types/shop.types';
-import { DAILY_DEAL_RATE, formatCarrots, getDailyDeal, getPrice, REWARD } from '../utils/carrotRules';
+import { DAILY_DEAL_PERCENT_OFF, formatCarrots, getDailyDeal, getPrice, REWARD } from '../utils/carrotRules';
 import CarrotIcon from './CarrotIcon';
 import CarrotWallet from './CarrotWallet';
 import ItemPreview from './ItemPreview';
@@ -46,9 +45,32 @@ type ItemState = 'equipped' | 'owned' | 'locked' | 'free' | 'buy';
  */
 export default function ShopBoard() {
     const hydrated = useShopStore((state) => state._hasHydrated);
-    const starsHydrated = useStickerStore((state) => state._hasHydrated);
+    const status = useShopStore((state) => state.status);
+    const userId = useShopStore((state) => state.userId);
+    const load = useShopStore((state) => state.load);
+    const needsSetup = useShopStore((state) => state.needsSetup);
 
-    if (!hydrated || !starsHydrated) {
+    if (status === 'error' && !hydrated) {
+        return (
+            <div role="alert" className="paper-panel flex flex-col items-center gap-3 px-6 py-16 text-center">
+                <p className="font-cute text-lg text-[#65564B]">
+                    {needsSetup ? '잡화점이 아직 공사 중이에요. 🚧' : '잡화점 문을 열지 못했어요. 😢'}
+                </p>
+                {needsSetup && (
+                    <p className="max-w-md text-sm text-[#65564B]/80">
+                        Supabase SQL Editor에서{' '}
+                        <code className="rounded bg-[#65564B]/10 px-1">supabase/migrations/20261118_village_friends.sql</code>{' '}
+                        을 한 번 실행하면 문이 열려요.
+                    </p>
+                )}
+                <button type="button" className="choice-btn" onClick={() => userId && void load(userId)}>
+                    다시 시도
+                </button>
+            </div>
+        );
+    }
+
+    if (!hydrated) {
         return (
             <div role="status" className="paper-panel flex flex-col items-center gap-3 px-6 py-16 text-center">
                 <p className="font-cute animate-pulse text-lg text-[#65564B]">🛍️ 잡화점 문을 여는 중이에요…</p>
@@ -60,8 +82,8 @@ export default function ShopBoard() {
 
 function ShopFloor() {
     const period = useDayPeriod();
-    const stars = useStickerStore((state) => state.stars);
     const {
+        stars,
         carrots,
         owned,
         equippedHat,
@@ -80,12 +102,14 @@ function ShopFloor() {
         say(
             carrots === 0
                 ? `어서 오세요~ 다람 잡화점이에요! 할 일을 하나 끝낼 때마다 당근을 ${REWARD.base}개 넘게 받을 수 있어요. 당근을 모아서 놀러 와요!`
-                : `어서 오세요~ 다람 잡화점이에요! 오늘의 특가는 '${deal.name}'! ${Math.round(DAILY_DEAL_RATE * 100)}% 싸게 드려요.`,
+                : `어서 오세요~ 다람 잡화점이에요! 오늘의 특가는 '${deal.name}'! ${DAILY_DEAL_PERCENT_OFF}% 싸게 드려요.`,
             'happy',
         ),
     );
     // 구매 성공 축하 연출
     const [bought, setBought] = useState<{ key: number; item: ShopItem } | null>(null);
+    // 서버에서 계산하는 동안 "살게요!"를 또 누르지 못하게 해요.
+    const [buying, setBuying] = useState(false);
 
     const selected = SHOP_ITEMS.find((item) => item.id === selectedId) ?? deal;
     const items = SHOP_ITEMS.filter((item) => item.category === tab);
@@ -154,8 +178,11 @@ function ShopFloor() {
         );
     };
 
-    const confirmPurchase = (item: ShopItem) => {
-        const result = purchase(item.id);
+    const confirmPurchase = async (item: ShopItem) => {
+        if (buying) return;
+        setBuying(true);
+        const result = await purchase(item.id);
+        setBuying(false);
         if (result === 'ok') {
             setBought({ key: Date.now(), item });
             // 산 물건은 바로 써 볼 수 있게 해 줘요.
@@ -175,6 +202,8 @@ function ShopFloor() {
             setDialogue(say(`앗, 당근이 ${formatCarrots(short)}개 모자라요… 할 일을 조금만 더 끝내고 와요!`, 'sorry'));
         } else if (result === 'locked') {
             setDialogue(say(`별 스티커가 ${item.requiresStars}개 필요해요. 조금만 더 힘내요!`, 'sorry'));
+        } else if (result === 'error') {
+            setDialogue(say('앗, 계산대가 잠깐 멈췄어요… 잠시 후에 다시 해 볼래요?', 'sorry'));
         } else {
             setDialogue(say('그건 이미 가지고 있는 물건이에요!', 'happy'));
         }
@@ -209,9 +238,10 @@ function ShopFloor() {
                                 <button
                                     type="button"
                                     className="choice-btn choice-btn--yes"
-                                    onClick={() => dialogue.confirm && confirmPurchase(dialogue.confirm)}
+                                    disabled={buying}
+                                    onClick={() => dialogue.confirm && void confirmPurchase(dialogue.confirm)}
                                 >
-                                    {getPrice(dialogue.confirm) === 0 ? '받을래요!' : '살게요!'}
+                                    {buying ? '계산 중…' : getPrice(dialogue.confirm) === 0 ? '받을래요!' : '살게요!'}
                                 </button>
                                 <button
                                     type="button"

@@ -14,7 +14,6 @@ import RewardReceipt from '@/domains/shop/components/RewardReceipt';
 import { DEFAULT_HAT } from '@/domains/shop/constants/shopCatalog';
 import { useShopStore } from '@/domains/shop/stores/useShopStore';
 import { useShallow } from 'zustand/react/shallow';
-import { useStickerStore } from '../stores/useStickerStore';
 import type { Todo, TodoStatus } from '../types/todo.types';
 import BunnyCelebration from './bunny/BunnyCelebration';
 import { BunnyBedroom, SleepingBubbles } from './bunny/BunnySleepingAnimation';
@@ -61,11 +60,9 @@ export default function TodoDashBoard({
     const celebrate = useBunnyStore((state) => state.celebrate);
     const cancelCelebration = useBunnyStore((state) => state.cancelCelebration);
 
-    const stickersHydrated = useStickerStore((state) => state._hasHydrated);
-    const stars = useStickerStore((state) => (stickersHydrated ? state.stars : 0));
-
-    // 잡화점에서 산 모자 · 마을 소품 (저장소를 다 읽기 전에는 기본 모습으로 그려요)
+    // 별 · 잡화점에서 산 모자 · 마을 소품 (서버에서 불러오기 전에는 기본 모습으로 그려요)
     const shopHydrated = useShopStore((state) => state._hasHydrated);
+    const stars = useShopStore((state) => (shopHydrated ? state.stars : 0));
     const hat = useShopStore((state) => (shopHydrated ? state.equippedHat : DEFAULT_HAT));
     const decor = useShopStore(useShallow((state) => (shopHydrated ? state.placedDecor : [])));
     const claimReward = useShopStore((state) => state.claimReward);
@@ -110,7 +107,7 @@ export default function TodoDashBoard({
         const daysLeft = priority.active.find((p) => p.todo.id === id)?.daysLeft ?? null;
         celebrate(id, title);
         changeStatus(id, 'DONE', {
-            onSuccess: () => claimReward({ id, title, daysLeft }),
+            onSuccess: () => void claimReward({ id, title, daysLeft }),
             onError: () => cancelCelebration(id),
         });
     };
@@ -129,6 +126,9 @@ export default function TodoDashBoard({
                         </Link>
                         <Link href="/shop">
                             <Button className="btn-soft">🛍️ 잡화점</Button>
+                        </Link>
+                        <Link href="/friends">
+                            <Button className="btn-soft">👫 친구</Button>
                         </Link>
                     </div>
                     <Link href="/todo/new">

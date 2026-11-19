@@ -1,15 +1,16 @@
 import { SHOP_ITEMS } from '../constants/shopCatalog';
 import type { ShopItem } from '../types/shop.types';
 
-/** 보상 규칙 */
+/** 보상 규칙 (실제 지급은 DB 함수 claim_todo_reward가 해요. 여기 값은 안내 문구용) */
 export const REWARD = {
     base: 100, // 할 일 하나 완료
     onTime: 50, // 마감일 전에(또는 당일에) 완료
     dailyFirst: 100, // 오늘의 첫 완료
 } as const;
 
-/** 오늘의 특가 할인율 */
-export const DAILY_DEAL_RATE = 0.3;
+/** 오늘의 특가: 원래 가격의 70%만 받아요. (30% 할인) */
+const DEAL_KEEP_PERCENT = 70;
+export const DAILY_DEAL_PERCENT_OFF = 100 - DEAL_KEEP_PERCENT;
 
 /** 사용자 기기 날짜 기준 'YYYY-MM-DD' */
 export function todayKey(date: Date = new Date()): string {
@@ -19,37 +20,29 @@ export function todayKey(date: Date = new Date()): string {
     return `${y}-${m}-${d}`;
 }
 
+/** 'YYYY-MM-DD' → 1970-01-01부터 지난 날 수 */
+function daysSinceEpoch(day: string): number {
+    const [y, m, d] = day.split('-').map(Number);
+    return Math.floor(Date.UTC(y, m - 1, d) / 86_400_000);
+}
+
 /**
- * 완료 보상 계산
- * @param daysLeft 마감까지 남은 날 (마감일이 없으면 null)
- * @param isFirstToday 오늘 처음 보상을 받는 완료인지
+ * 오늘의 특가 상품 (날짜마다 바뀌고, 하루 동안은 같아요)
+ * ⚠ DB 함수 buy_shop_item과 같은 계산이에요. (가격 있는 물건을 목록 순서대로 돌아가며)
  */
-export function calcReward(daysLeft: number | null, isFirstToday: boolean) {
-    const lines: { label: string; amount: number }[] = [{ label: '배달 완료', amount: REWARD.base }];
-    if (daysLeft !== null && daysLeft >= 0) lines.push({ label: '마감 전 완료', amount: REWARD.onTime });
-    if (isFirstToday) lines.push({ label: '오늘의 첫 완료', amount: REWARD.dailyFirst });
-    const total = lines.reduce((sum, line) => sum + line.amount, 0);
-    return { lines, total };
-}
-
-/** 날짜 문자열로 매일 같은 숫자를 만드는 작은 해시 */
-function hashDay(key: string): number {
-    let h = 0;
-    for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-    return h;
-}
-
-/** 오늘의 특가 상품 (날짜마다 바뀌고, 하루 동안은 같아요) */
 export function getDailyDeal(day: string = todayKey()): ShopItem {
     const candidates = SHOP_ITEMS.filter((item) => item.price > 0);
-    return candidates[hashDay(day) % candidates.length];
+    return candidates[daysSinceEpoch(day) % candidates.length];
 }
 
-/** 오늘 실제로 내야 하는 가격 (특가 반영) */
+/**
+ * 오늘 실제로 내야 하는 가격 (특가 반영)
+ * 부동소수점 오차 없이 DB(round)와 같은 값이 나오도록 정수로 계산해요.
+ */
 export function getPrice(item: ShopItem, day: string = todayKey()): number {
     if (item.price === 0) return 0;
     if (getDailyDeal(day).id === item.id) {
-        return Math.round((item.price * (1 - DAILY_DEAL_RATE)) / 10) * 10;
+        return Math.round((item.price * DEAL_KEEP_PERCENT) / 1000) * 10;
     }
     return item.price;
 }
